@@ -4,10 +4,6 @@ var width = canvas.clientWidth;
 var height = canvas.clientHeight;
 canvas.width=width;
 canvas.height=height;
-const ground = new Image();
-const fieldim=new Image();
-const building=new Image();
-fieldim.src="media/field.png";
 const ctx = canvas.getContext("2d");
 var xterrain = Math.min(Math.max(Math.floor(width/200),3),10);
 var yterrain = Math.min(Math.max(Math.floor(height/200),3),5);
@@ -30,7 +26,6 @@ var swamp = [];
 var terrains = [];
 var ways;
 var trees = [];
-ground.src = "media/ground.png";
 var river = [[Math.random() * width, -10, true]];
 var start = true;
 var inflation = 1;
@@ -48,6 +43,41 @@ var bButton = document.getElementById("buy");
 var cubature = 0;
 var hour=0;
 var buildings=[];
+const ground = new Image();
+ground.src = "media/ground.png";
+var groundtxt;
+ground.onload=function(){
+let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+groundtxt=ctx.createPattern(ground, "repeat");
+groundtxt.setTransform(matrix1.scale(m*0.5));}
+const swampi = new Image();
+swampi.src = "media/swamp.png";
+var swamptxt;
+swampi.onload=function(){
+let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+swamptxt=ctx.createPattern(swampi, "repeat");
+swamptxt.setTransform(matrix1.scale(m*0.5));}
+const fieldi = new Image();
+fieldi.src = "media/field.png";
+var fieldtxt;
+fieldi.onload=function(){
+let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+fieldtxt=ctx.createPattern(fieldi, "repeat");
+fieldtxt.setTransform(matrix1.scale(m*0.5));}
+const tree1i = new Image();
+tree1i.src = "media/trees1.png";
+var tree1txt;
+tree1i.onload=function(){
+let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+tree1txt=ctx.createPattern(tree1i, "repeat");
+tree1txt.setTransform(matrix1.scale(m*0.5));}
+const tree2i = new Image();
+tree2i.src = "media/trees2.png";
+var tree2txt;
+tree2i.onload=function(){
+let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+tree2txt=ctx.createPattern(tree2i, "repeat");
+tree2txt.setTransform(matrix1.scale(m*0.5));}
 generateWorld();
 setInterval(function () {
     hour++;
@@ -351,19 +381,9 @@ canvas.onkeydown = function (evt) {
     }
 }
 function graphics() {
-    let txt=new Image();
-    txt.src="media/ground.png";
-    let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-    let pattern=ctx.createPattern(txt, "repeat");
-    pattern.setTransform(matrix1.scale(m*0.5));
-    ctx.fillStyle=pattern;
+    ctx.fillStyle=groundtxt;
     ctx.fillRect(0,0,width,height);
-    txt=new Image();
-    txt.src="media/swamp.png";
-    matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-    pattern=ctx.createPattern(txt, "repeat");
-    pattern.setTransform(matrix1.scale(m*0.5));
-    ctx.fillStyle=pattern;
+    ctx.fillStyle=swamptxt;
     ctx.globalAlpha = 0.1;
     for (var i = 0; i < swamp.length; i++) {
         ctx.beginPath();
@@ -371,6 +391,7 @@ function graphics() {
         ctx.fill()
     }
     ctx.globalAlpha = 1;
+    ctx.filter="blur("+(m/2)+"px)";
     for (var i = 0; i < field.length; i++) {
         if (field[i].length > 0) {
             ctx.beginPath();
@@ -387,11 +408,7 @@ function graphics() {
             ctx.strokeStyle = "#705000";
             ctx.stroke();
             ctx.setLineDash([]);}
-                ctx.filter = 'blur('+(m)+'px)';
-                const matrix = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-                let pattern=ctx.createPattern(fieldim, "repeat");
-                pattern.setTransform(matrix.scale(0.3*m));
-                ctx.fillStyle=pattern;
+                ctx.fillStyle=fieldtxt;
                 ctx.fill();
                 if(field[i][0][3]==1){
                     ctx.fillStyle="rgba(0,0,0,0.3)";
@@ -401,9 +418,9 @@ function graphics() {
                     ctx.fillStyle="rgba(10,"+(field[i][0][2]-date)+",20,0.4)";
                     ctx.fill();
                 }
-                ctx.filter = 'none';
         }
     }
+    ctx.filter="none";
     ctx.beginPath();
     drawway(river,0);
     ctx.lineWidth = 19 * m;
@@ -491,20 +508,16 @@ function graphics() {
     for (var i = alltrees.length - 1; i >= 0; i--) {
         ctx.beginPath();
         ctx.rect(alltrees[i][0] - 3 * alltrees[i][3] * m, alltrees[i][1] - 3 * alltrees[i][3] * m, 6 * alltrees[i][3] * m, 6 * alltrees[i][3] * m);
-        let treetxt=new Image();
          if (alltrees[i][2] == 1) {
-         treetxt.src="media/trees1.png";
+            ctx.fillStyle=tree1txt;
          }
          else if (alltrees[i][2] == 2) {
-             treetxt.src="media/trees2.png";
+            ctx.fillStyle=tree2txt;
          }
          else{
-            treetxt.src="media/trees3.png";
+            ctx.fillStyle=tree2txt;
          }
-        const matrix = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-        let pattern=ctx.createPattern(treetxt, "repeat");
-        pattern.setTransform(matrix.scale(m*0.5));
-        ctx.fillStyle=pattern;
+
         ctx.fill();
 
     }
