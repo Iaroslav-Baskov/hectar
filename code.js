@@ -1,4 +1,3 @@
-
 var canvas = document.getElementById("myCanvas");
 var width = canvas.clientWidth;
 var height = canvas.clientHeight;
@@ -490,6 +489,7 @@ function graphics() {
         ctx.rotate(buildings[i][6]);
         ctx.translate(-buildings[i][2],-buildings[i][2]);
         if(buildings[i][5][2]<=date){
+            let building=new Image();
         building.src=buildings[i][3];
         ctx.drawImage(building,0,0,buildings[i][2]*2,buildings[i][2]*2);
         }
