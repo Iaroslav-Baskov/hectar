@@ -1,3 +1,4 @@
+
 var canvas = document.getElementById("myCanvas");
 var width = canvas.clientWidth;
 var height = canvas.clientHeight;
@@ -25,7 +26,9 @@ var swamp = [];
 var terrains = [];
 var ways;
 var trees = [];
-var river = [[Math.random() * width, -10, true]];
+let rx=Math.random() * width;
+var sand = [[rx, -10]];
+var river = [[rx, -10, true]];
 var start = true;
 var inflation = 1;
 var selected = -1;
@@ -42,41 +45,39 @@ var bButton = document.getElementById("buy");
 var cubature = 0;
 var hour=0;
 var buildings=[];
-const ground = new Image();
-ground.src = "media/ground.png";
-var groundtxt;
-ground.onload=function(){
-let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-groundtxt=ctx.createPattern(ground, "repeat");
-groundtxt.setTransform(matrix1.scale(m*0.5));}
-const swampi = new Image();
-swampi.src = "media/swamp.png";
-var swamptxt;
-swampi.onload=function(){
-let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-swamptxt=ctx.createPattern(swampi, "repeat");
-swamptxt.setTransform(matrix1.scale(m*0.5));}
-const fieldi = new Image();
-fieldi.src = "media/field.png";
-var fieldtxt;
-fieldi.onload=function(){
-let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-fieldtxt=ctx.createPattern(fieldi, "repeat");
-fieldtxt.setTransform(matrix1.scale(m*0.5));}
-const tree1i = new Image();
-tree1i.src = "media/trees1.png";
-var tree1txt;
-tree1i.onload=function(){
-let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-tree1txt=ctx.createPattern(tree1i, "repeat");
-tree1txt.setTransform(matrix1.scale(m*0.5));}
-const tree2i = new Image();
-tree2i.src = "media/trees2.png";
-var tree2txt;
-tree2i.onload=function(){
-let matrix1 = new DOMMatrix([1, 0, 0, 1, 0, 0]);
-tree2txt=ctx.createPattern(tree2i, "repeat");
-tree2txt.setTransform(matrix1.scale(m*0.5));}
+ctx.lineCap = "round";
+const textures = {
+    "ground" : { src: "media/ground.png", pattern: null,img:null},
+    "swamp" : { src: "media/swamp.png", pattern: null ,img:null},
+    "field": { src: "media/field.png", pattern: null ,img:null},
+    "tree1": { src: "media/trees1.png", pattern: null ,img:null},
+    "tree2": { src: "media/trees2.png", pattern: null ,img:null},
+    "pStation" : { src: "media/pStation.png", pattern: null , img: null },
+    "potato" : { src: "media/potato.png", pattern: null , img: null }
+};
+function loadTextures(callback) {
+    const entries = Object.entries(textures);
+    let loadedCount = 0;
+
+    entries.forEach(([key, texture]) => {
+        const img = new Image();
+        img.src = texture.src;
+        img.onload = () => {
+            const matrix = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+            texture.img=img;
+            texture.pattern = ctx.createPattern(img, "repeat");
+            texture.pattern.setTransform(matrix.scale(m * 0.5));
+            loadedCount++;
+            if (loadedCount === entries.length && callback) {
+                callback();
+            }
+        };
+    });
+}
+loadTextures(() => {
+    // Код, который будет выполнен после загрузки всех текстур
+    console.log("Все текстуры загружены");
+
 generateWorld();
 setInterval(function () {
     hour++;
@@ -134,7 +135,7 @@ setInterval(function () {
     } else if (mode != 2 & mode != 5) {
         forClear = [];
     }
-}, 100);
+}, 10);});
 clearButton.onclick = function () {
     borders.checked = true;
     mode = 2;
@@ -266,7 +267,7 @@ canvas.onclick = function (e) {
     if(mode==7){
         if(isClear([mx,my],4*m) & closeToWay([mx,my],0*m,100*m)){
             if(buy(200*inflation)){
-            buildings.push([pointToWay([mx,my],5*m)[0],pointToWay([mx,my],5*m)[1],3.5*m,"media/potato.png","kfSklad",[100,0,date+20],rotWay([mx,my])]);
+            buildings.push([pointToWay([mx,my],5*m)[0],pointToWay([mx,my],5*m)[1],3.5*m,"potato","kfSklad",[100,0,date+20],rotWay([mx,my])]);
             mode=-1;
             for(var i=0;i<trees.length;i++){
                 if((trees[i][0]-mx)**2+(trees[i][1]-my)**2<25*m**2){
@@ -323,7 +324,7 @@ canvas.onclick = function (e) {
     if(mode==11){
         if(isClear([mx,my],25*m) & closeToWay([mx,my],0*m,100*m)){
             if(buy(3000*inflation)){
-            buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"media/pStation.png","ptstation",[0,0,date+100],rotWay([mx,my])+Math.PI/2]);
+            buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"pStation","ptstation",[0,0,date+100],rotWay([mx,my])+Math.PI/2]);
             mode=-1;
             for(var i=0;i<trees.length;i++){
                 if((trees[i][0]-mx)**2+(trees[i][1]-my)**2<625*m**2){
@@ -361,7 +362,7 @@ canvas.onmouseup = function () {
         mode = -1;
     }
 }
-canvas.onkeydown = function (evt) {
+document.onkeydown = function (evt) {
     evt = evt || window.event;
     var isEscape = false;
     if ("key" in evt) {
@@ -380,204 +381,261 @@ canvas.onkeydown = function (evt) {
     }
 }
 function graphics() {
-    ctx.fillStyle=groundtxt;
-    ctx.fillRect(0,0,width,height);
-    ctx.fillStyle=swamptxt;
-    ctx.globalAlpha = 0.1;
-    for (var i = 0; i < swamp.length; i++) {
-        ctx.beginPath();
-        ctx.arc(swamp[i][0], swamp[i][1], 15 * m, 0, 2 * Math.PI);
-        ctx.fill()
+    ctx.fillStyle = textures["ground"].pattern;
+    ctx.fillRect(0, 0, width, height);
+
+    drawSwamps();
+    drawFields();
+    drawRiver();
+    drawWays();
+    drawBuildings();
+    drawTrees();
+    if (borders.checked) {
+        drawBorders();
+        drawForClear();
+        drawBuildingLabels();
     }
+    if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4)
+    drawtoWay(50*m);
+}
+
+function drawSwamps() {
+    ctx.fillStyle = textures["swamp"].pattern;
+    ctx.globalAlpha = 0.1;
+    swamp.forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(x, y, 15 * m, 0, 2 * Math.PI);
+        ctx.fill();
+    });
     ctx.globalAlpha = 1;
-    ctx.filter="blur("+(m/2)+"px)";
-    for (var i = 0; i < field.length; i++) {
-        if (field[i].length > 0) {
+}
+
+function drawFields() {
+    ctx.filter = "blur(" + (m / 2) + "px";
+    field.forEach((f, i) => {
+        if (f.length > 0) {
             ctx.beginPath();
-            ctx.lineWidth = 3
-            ctx.moveTo(field[i][0][0], field[i][0][1]);
-            drawway(field[i],0);
-            if (i == field.length - 1 & ( mode ==5)) {
+            ctx.lineWidth = 3;
+            ctx.moveTo(f[0][0], f[0][1]);
+            drawway(f, 0);
+            if (i === field.length - 1 && mode === 5) {
                 ctx.lineTo(mx, my);
             } else {
                 ctx.closePath();
             }
-            if(borders.checked){
-            ctx.setLineDash([2, 7]);
-            ctx.strokeStyle = "#705000";
-            ctx.stroke();
-            ctx.setLineDash([]);}
-                ctx.fillStyle=fieldtxt;
+            drawFieldBorder();
+            ctx.fillStyle = textures["field"].pattern;
+            ctx.fill();
+            if (f[0][3] === 1) {
+                ctx.fillStyle = "rgba(0,0,0,0.3)";
                 ctx.fill();
-                if(field[i][0][3]==1){
-                    ctx.fillStyle="rgba(0,0,0,0.3)";
-                    ctx.fill();
-                }
-                else if(field[i][0][3]==2){
-                    ctx.fillStyle="rgba(10,"+(field[i][0][2]-date)+",20,0.4)";
-                    ctx.fill();
-                }
+            } else if (f[0][3] === 2) {
+                ctx.fillStyle = "rgba(10," + (f[0][2] - date) + ",20,0.4)";
+                ctx.fill();
+            }
         }
+    });
+    ctx.filter = "none";
+}
+
+function drawFieldBorder() {
+    if (borders.checked) {
+        ctx.setLineDash([2, 7]);
+        ctx.strokeStyle = "#705000";
+        ctx.stroke();
+        ctx.setLineDash([]);
     }
-    ctx.filter="none";
+}
+
+function drawRiver() {
     ctx.beginPath();
-    drawway(river,0);
-    ctx.lineWidth = 19 * m;
-    ctx.strokeStyle="rgba(155,147,142,0.3)";
+    drawway(sand, 0);
+    ctx.lineWidth = 20 * m;
+    ctx.strokeStyle = "rgba(175,147,142,0.3)";
     ctx.stroke();
-    ctx.strokeStyle="rgba(155,147,142,1)";
-    ctx.lineWidth = 16 * m;
+    ctx.lineWidth = 19.5 * m;
+    ctx.strokeStyle = "rgba(175,147,142,0.4)";
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(175,147,142,1)";
+    ctx.lineWidth = 17 * m;
+    ctx.stroke();
+    ctx.lineWidth = 15 * m;
+    ctx.strokeStyle = "rgba(60,45,40,0.3)";
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(river[i][0], river[i][1]);
-    for (var i = 1; i < river.length; i++) {
-        ctx.strokeStyle = "#230f1a";
+    ctx.moveTo(river[0][0], river[0][1]);
+    for (let i = 1; i < river.length; i++) {
+        ctx.strokeStyle = "#152730";
         ctx.lineWidth = 10 * m;
         ctx.lineTo(river[i][0], river[i][1]);
         if (!river[i - 1][2]) {
             ctx.stroke();
             ctx.beginPath();
             ctx.strokeStyle = "#200e1c";
-            drawway(river.slice(i),0);
-            i=river.length-1;
+            drawway(river.slice(i), 0);
+            i = river.length - 1;
         }
         ctx.stroke();
     }
-    for (var j = 0; j < ways.length; j++) {
-        if (ways[j].length > 1) {
-            if(ways[j][0][4] || borders.checked){
-            if (ways[j][0][2] == 1) {
-                ctx.beginPath();
-                drawway(ways[j],0);
-                ctx.strokeStyle="rgba(155,147,142,0.3)";
-                ctx.length=16*m
-                ctx.stroke();
-                ctx.strokeStyle="rgba(155,147,142,0.6)";
-                ctx.length=14*m
-                ctx.stroke();
-                ctx.strokeStyle="#b0a0a0";
-                ctx.lineWidth = 8 * m;
-                ctx.stroke();
-            } else if (ways[j][0][2] == 2) {
-                ctx.beginPath();
-                ctx.moveTo(ways[j][0][0] + pdx(ways[j][0][0], ways[j][0][1], ways[j][1][0], ways[j][1][1], k * m), ways[j][1][1] + pdy(ways[j][0][0], ways[j][0][1], ways[j][1][0], ways[j][1][1], k* m));
-                ctx.strokeStyle = "#705030";
-                ctx.lineWidth = 1 * m;
-                for(var k=-1.5;k<=1.5;k+=3){
-                ctx.beginPath();
-                for (var i = 1; i < ways[j].length; i++) {
-                    ctx.lineTo(ways[j][i][0] + pdx(ways[j][i - 1][0], ways[j][i - 1][1], ways[j][i][0], ways[j][i][1], k * m), ways[j][i][1] + pdy(ways[j][i - 1][0], ways[j][i - 1][1], ways[j][i][0], ways[j][i][1], k * m));
-                    if(!ways[j][i][4] & ctx.getLineDash()!=[[5*m,5*m]]){
-                        ctx.stroke();
-                        if(borders.checked){
-                        ctx.beginPath();
-                        ctx.setLineDash([2*m,2*m]);
-                        drawway(ways[j].slice(i),k*m);}
-                        i=ways[j].length-1;
-                    }
-                }
-                ctx.stroke();
-                ctx.setLineDash([]);}
+}
+
+function drawWays() {
+    ways.forEach(way => {
+        if (way.length > 1 && (way[0][4] || borders.checked)) {
+            ctx.beginPath();
+            drawway(way, 0);
+            if (way[0][2] === 1) {
+                drawWayType1();
+            } else if (way[0][2] === 2) {
+                drawWayType2(way);
             }
         }
-    }
-    ctx.setLineDash([]);
-    }
-    for (var i = 0; i < buildings.length; i++) {
-        ctx.save();
-        ctx.translate(buildings[i][0],buildings[i][1]);
-        ctx.rotate(buildings[i][6]);
-        ctx.translate(-buildings[i][2],-buildings[i][2]);
-        if(buildings[i][5][2]<=date){
-            let building=new Image();
-        building.src=buildings[i][3];
-        ctx.drawImage(building,0,0,buildings[i][2]*2,buildings[i][2]*2);
+    });
+}
+function drawtoWay(r) {
+    ctx.beginPath();
+    ctx.lineWidth=r*2;
+    ctx.strokeStyle="rgba(0,255,0,0.3)";
+
+    ways.forEach(way => {
+        if (way.length > 1) {
+            drawway(way, 0);
         }
-        else if(borders.checked){
+
+    });
+    ctx.stroke();
+    ctx.lineWidth=4*m;
+    ctx.strokeStyle="rgba(255,255,0,1)";
+    ctx.stroke();
+}
+
+function drawWayType1() {
+    ctx.strokeStyle = "rgba(175,147,142,0.3)";
+    ctx.lineWidth = 16 * m;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(175,147,142,0.6)";
+    ctx.lineWidth = 14 * m;
+    ctx.stroke();
+    ctx.strokeStyle = "#a09090";
+    ctx.lineWidth = 8 * m;
+    ctx.stroke();
+}
+
+function drawWayType2(way) {
+    ctx.strokeStyle = "rgba(155,127,122,0.9)";
+    ctx.lineWidth = 1 * m;
+    for (let k = -1.5; k <= 1.5; k += 3) {
+        ctx.beginPath();
+        ctx.moveTo(way[0][0] + pdx(way[0][0], way[0][1], way[1][0], way[1][1], k * m), way[1][1] + pdy(way[0][0], way[0][1], way[1][0], way[1][1], k * m));
+        for (let i = 1; i < way.length; i++) {
+            ctx.lineTo(way[i][0] + pdx(way[i - 1][0], way[i - 1][1], way[i][0], way[i][1], k * m), way[i][1] + pdy(way[i - 1][0], way[i - 1][1], way[i][0], way[i][1], k * m));
+            if (!way[i][4] && ctx.getLineDash() != [[5 * m, 5 * m]]) {
+                ctx.stroke();
+                if (borders.checked) {
+                    ctx.beginPath();
+                    ctx.setLineDash([2 * m, 2 * m]);
+                    drawway(way.slice(i), k * m);
+                }
+                i = way.length - 1;
+            }
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+}
+
+function drawBuildings() {
+    buildings.forEach(building => {
+        ctx.save();
+        ctx.translate(building[0], building[1]);
+        ctx.rotate(building[6]);
+        ctx.translate(-building[2], -building[2]);
+        if (building[5][2] <= date) {
+            ctx.drawImage(textures[building[3]].img, 0, 0, building[2] * 2, building[2] * 2);
+        } else if (borders.checked) {
             ctx.beginPath();
-            ctx.rect(0,0,buildings[i][2]*2,buildings[i][2]*2);
+            ctx.rect(0, 0, building[2] * 2, building[2] * 2);
             ctx.strokeStyle = "#902000";
-            ctx.lineWidth=1;
+            ctx.lineWidth = 1;
             ctx.setLineDash([1, 1]);
             ctx.stroke();
             ctx.setLineDash([]);
         }
         ctx.restore();
-    }
-    var alltrees = trees.concat(treesForClear);
-    for (var i = alltrees.length - 1; i >= 0; i--) {
+    });
+}
+
+function drawTrees() {
+    const alltrees = trees.concat(treesForClear);
+    alltrees.forEach(tree => {
         ctx.beginPath();
-        ctx.rect(alltrees[i][0] - 3 * alltrees[i][3] * m, alltrees[i][1] - 3 * alltrees[i][3] * m, 6 * alltrees[i][3] * m, 6 * alltrees[i][3] * m);
-         if (alltrees[i][2] == 1) {
-            ctx.fillStyle=tree1txt;
-         }
-         else if (alltrees[i][2] == 2) {
-            ctx.fillStyle=tree2txt;
-         }
-         else{
-            ctx.fillStyle=tree2txt;
-         }
-
+        ctx.rect(tree[0] - 3 * tree[3] * m, tree[1] - 3 * tree[3] * m, 6 * tree[3] * m, 6 * tree[3] * m);
+        if (tree[2] === 1) {
+            ctx.fillStyle = textures["tree1"].pattern;
+        } else {
+            ctx.fillStyle = textures["tree2"].pattern;
+        }
         ctx.fill();
+    });
+}
 
-    }
-    if (borders.checked) {
-        ctx.setLineDash([5, 10]);
-        ctx.strokeStyle = "#000000";
-        for (var i = 0; i < terrains.length; i++) {
-            if (!terrains[i][terrains[i].length - 2]) {
-                if (i != selected) {
-                    ctx.beginPath();
-                    ctx.moveTo(terrains[i][0][0], terrains[i][0][1]);
-                    for (var j = 1; j < terrains[i].length - 2; j++) {
-                        ctx.lineWidth = 0.5 * m;
-                        ctx.lineTo(terrains[i][j][0], terrains[i][j][1]);
-                    }
-                    ctx.closePath();
-                    ctx.fillStyle = "rgba(100,100,100,0.4)";
-                    ctx.fill();
-                } else if (!start) {
-                    ctx.font = "15px Arial";
-                    ctx.fillStyle = "rgba(0,0,0,1)";
-                    ctx.fillText("цена: " + Math.floor(terrains[i][terrains[i].length - 1] * inflation) + "k₽", mx, my);
-                } else {
-                    ctx.font = "15px Arial";
-                    ctx.fillStyle = "rgba(0,0,0,1)";
-                    ctx.fillText("Выберите бесплатный", mx, my);
-                    ctx.fillText("участок для освоения", mx, my + 15);
-                }
+function drawBorders() {
+    ctx.setLineDash([5, 10]);
+    ctx.strokeStyle = "#000000";
+    terrains.forEach((terrain, i) => {
+        if (!terrain[terrain.length - 2]) {
+            ctx.beginPath();
+            ctx.moveTo(terrain[0][0], terrain[0][1]);
+            for (let j = 1; j < terrain.length - 2; j++) {
+                ctx.lineWidth = 0.5 * m;
+                ctx.lineTo(terrain[j][0], terrain[j][1]);
+            }
+            ctx.closePath();
+            ctx.fillStyle = i === selected ? "rgba(100,100,100,0)" : "rgba(0,0,0,0.4)";
+            ctx.fill();
+
+        }
+        ctx.stroke();
+        if(i==selected){
+            ctx.font = "15px Arial";
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            const message = !start ? "цена: " + Math.floor(terrains[selected][terrains[selected].length - 1] * inflation) + "k₽" : "Выберите бесплатный участок для освоения";
+            ctx.fillText(message, mx, my);
+        }
+    });
+    ctx.setLineDash([]);
+
+}
+
+function drawForClear() {
+    ctx.setLineDash([5,5]);
+    forClear.forEach((clear, i) => {
+        if (clear.length > 0) {
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#902000";
+            drawway(clear,0);
+            if (i == forClear.length - 1 && (mode === 2 || mode === 5)) {
+                ctx.lineTo(mx, my);
+            } else {
+                ctx.closePath();
             }
             ctx.stroke();
         }
-        ctx.setLineDash([2, 7]);
-
-        for (var i = 0; i < forClear.length; i++) {
-            if (forClear[i].length > 0) {
-                ctx.beginPath();
-                ctx.lineWidth = 3
-                ctx.strokeStyle = "#902000";
-                ctx.moveTo(forClear[i][0][0], forClear[i][0][1]);
-                for (var j = 1; j < forClear[i].length; j++) {
-                    ctx.lineTo(forClear[i][j][0], forClear[i][j][1]);
-                }
-                if (i == forClear.length - 1 & (mode == 2 || mode ==5)) {
-                    ctx.lineTo(mx, my);
-                } else {
-                    ctx.closePath();
-                }
-                ctx.stroke();
-            }
-        }
-        ctx.setLineDash([]);
-        for (var i = 0; i < buildings.length; i++) {
-            if(buildings[i][4]=="kfSklad" & buildings[i][5][2]<=date){
-                ctx.font = "15px Arial";
-                ctx.fillStyle = "rgba(0,0,0,1)";
-                ctx.fillText(Math.floor(buildings[i][5][1]/buildings[i][5][0]*100) + "%", buildings[i][0]-buildings[i][2], buildings[i][1]-buildings[i][2]);
-            }
-        }
-    }
+    });
+    ctx.setLineDash([]);
 }
+
+function drawBuildingLabels() {
+    buildings.forEach(building => {
+        if (building[4] === "kfSklad" && building[5][2] <= date) {
+            ctx.font = "15px Arial";
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillText(Math.floor(building[5][1] / building[5][0] * 100) + "%", building[0] - building[2], building[1] - building[2]);
+        }
+    });
+}
+               
 
 
 
@@ -608,6 +666,7 @@ function generateWorld() {
     speedx = (Math.random() - 0.5) * 20 * m;
     speedy = Math.random() * 2 * m+ 5*m;
     while (river[river.length - 1][0] <= width+20*m & river[river.length - 1][0] >= -20*m & river[river.length - 1][1] <= height+20*m & river[river.length - 1][1] >= -20*m || river.length < 100) {
+        sand.push([river[river.length - 1][0] + speedx+Math.cbrt(Math.random()-0.5)*m, river[river.length - 1][1] + speedy+Math.cbrt(Math.random()-0.5)*m]);
         river.push([river[river.length - 1][0] + speedx, river[river.length - 1][1] + speedy, true]);
         speedx += (Math.random() - 0.5) * 1.5 * m;
         speedy += (Math.random() - 0.5) * 1.5 * m;
@@ -754,6 +813,9 @@ ctx.moveTo(points[0][0]+pdx(points[0][0],points[0][1],points[1][0],points[1][1],
 for(var i=1;i<points.length;i++){
     ctx.lineTo(points[i][0]+pdx(points[i-1][0],points[i-1][1],points[i][0],points[i][1],x),points[i][1]+pdy(points[i-1][0],points[i-1][1],points[i][0],points[i][1],x));
 }}
+else if((points.length>0)){
+    ctx.moveTo(points[0][0],points[0][1]);
+}
 }
 function closeToWay(point,min,max){
     var close=false;
