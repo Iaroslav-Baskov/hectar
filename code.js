@@ -136,43 +136,57 @@ setInterval(function () {
         forClear = [];
     }
 }, 10);});
-clearButton.onclick = function () {
+clearButton.onmousedown = function () {
     borders.checked = true;
     mode = 2;
     forClear.push([]);
 }
-fieldButton.onclick = function () {
+document.getElementById("checker").onmousedown = function () {
+    borders.checked = !borders.checked;
+}
+fieldButton.onmousedown = function () {
     borders.checked = true;
     mode = 5;
-    field.push([]);
+    if(field.length==0){
+    field.push([]);}
+    else if(field[field.length-1].length>0){    field.push([]);}
     forClear.push([]);
 }
-bwButton.onclick = function () {
+bwButton.onmousedown = function () {
     borders.checked = true;
     mode = 3;
     ways.push([]);
 }
-field1Button.onclick=function() {
+field1Button.onmousedown=function() {
     mode=6;
 }
-kfButton.onclick=function(){
+kfButton.onmousedown=function(){
     mode=8;
 }
-tradeButton.onclick=function(){
+tradeButton.onmousedown=function(){
     mode=10;
 }
-getkfButton.onclick=function(){
+getkfButton.onmousedown=function(){
     mode=9;
 }
-silosButton.onclick=function() {
+silosButton.onmousedown=function() {
     borders.checked = true;
     mode=7;
 }
-ptButton.onclick=function() {
+document.getElementById("cancel").onmousedown=function(){
+    if (mode == 2 || mode == 5) {
+        forClear.splice(forClear.length - 1, 1);
+    }
+    if (mode == 5) {
+        field.splice(forClear.length - 1, 1);
+    }
+    mode = -1;
+}
+ptButton.onmousedown=function() {
     borders.checked = true;
     mode=11;
 }
-bButton.onclick = function () {
+bButton.onmousedown = function () {
     borders.checked = true;
     mode = 0;
 }
@@ -236,10 +250,9 @@ canvas.onclick = function (e) {
 
 
     }
-    if (mode == 5 &closeToWay([mx,my],0,50*m)) {
-        if (terrains[selected][terrains[selected].length - 2]) {
+    if (mode == 5 &closeToWay([mx,my],0,50*m) & isClear([mx,my],1*m)) {
             if (field[field.length - 1].length > 0) {
-                if ((mx - field[field.length - 1][0][0]) ** 2 + (my - field[field.length - 1][0][1]) ** 2 < 400 * m ** 2) {
+                if ((mx - field[field.length - 1][0][0]) ** 2 + (my - field[field.length - 1][0][1]) ** 2 < 400 * m ** 2 & field[field.length - 1].length > 2) {
                     money-= calcPolygonArea(field[field.length - 1].concat([field[field.length - 1][0]]))/m**2/10000*15*inflation;
                     field[field.length-1][0].push(date+calcPolygonArea(field[field.length - 1].concat([field[field.length - 1][0]]))/m**2/240000);
                     field[field.length-1][0].push(0);
@@ -250,7 +263,6 @@ canvas.onclick = function (e) {
             } else {
                 field[field.length - 1].push([mx, my]);
             }
-        }
 
 
     }
@@ -395,8 +407,15 @@ function graphics() {
         drawForClear();
         drawBuildingLabels();
     }
-    if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4)
-    drawtoWay(50*m);
+    if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4){
+    drawtoWay(50*m);}
+    if(mode==6){
+        greenFields(0);}
+    if(mode==9){
+        greenFields(2);}
+    if(mode==8){
+        greenFields(1);}
+    
 }
 
 function drawSwamps() {
@@ -446,7 +465,18 @@ function drawFieldBorder() {
         ctx.setLineDash([]);
     }
 }
-
+function greenFields(md) {
+    field.forEach((f, i) => {
+        if (f.length > 0) {
+            if(f[0][2]<date & f[0][3]==md){
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            drawway(f, 0);
+            ctx.fillStyle ="rgba(0,255,0,0.3)";
+            ctx.fill();}
+        }
+    });
+}
 function drawRiver() {
     ctx.beginPath();
     drawway(sand, 0);
@@ -596,7 +626,7 @@ function drawBorders() {
 
         }
         ctx.stroke();
-        if(i==selected){
+        if(i==selected & mode==0){
             ctx.font = "15px Arial";
             ctx.fillStyle = "rgba(0,0,0,1)";
             const message = !start ? "цена: " + Math.floor(terrains[selected][terrains[selected].length - 1] * inflation) + "k₽" : "Выберите бесплатный участок для освоения";
