@@ -2,7 +2,7 @@
     <head>
         <style>
           :root {
-            --height: max(1.5vh, 1.5vw);
+            --height: max(2vh, 1.5vw);
         }
         body * {
           font-family: monospace;
@@ -15,14 +15,14 @@
         }
         .dropdown {
             cursor: pointer;
-            min-width: 50vw;
+            min-width: min(70vw,70vh);
             position: relative;
             display: inline-block;
         }
         .dropdown>* {
             line-height: calc(2 * var(--height));
             text-align: center;
-            width: 50vw;
+            width: 100%;
             min-height: calc(2 * var(--height));
             padding: 0;
             border-width: 1px;
@@ -41,10 +41,10 @@
         }
         .info {
             margin: 0;
+            width: calc(100% - min(70vw,70vh));
+            padding-left: calc(0.5 * var(--height));
             line-height: calc(2 * var(--height));
-            text-align: center;
             height: calc(2 * var(--height));
-            width: 50vw;
         }
         .header {
             height: calc(2 * var(--height));
