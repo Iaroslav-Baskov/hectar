@@ -1,32 +1,164 @@
 <html>
     <head>
-        
+        <style>
+        :root {
+ --height:max(3vh, 2vw);
+}
+        body *{
+            font-size: var(--height);
+        }
+        body{
+                        margin: 0;}
+        .dropdown {
+            min-width:  50vw;
+            position: relative;
+            display: inline-block;
+          }
+           .dropdown>* {
+            line-height: calc(2 * var(--height));
+            text-align: center;
+            background-color: #ffffff;
+            width: 50vw;
+            min-height:  calc(2 * var(--height));
+            z-index: 10;
+            padding: 0;
+            border-width: 1px;
+            border-color: grey;
+            min-height: calc(2 * var(--height));
+          } 
+          .dropdown-content:hover{
+            background-color: rgb(189, 189, 189);
+          }
+          .dropdown-content {
+            cursor: pointer;
+            display: none;
+            position: relative;
+          }
+          
+          .dropdown:hover .dropdown-content {
+            display: block;
+          }
+          .info{
+            margin: 0;
+            line-height:calc(2 * var(--height));
+            text-align: center;
+              height:calc(2 * var(--height));
+              width:  50vw;
+          }
+          .header{
+            height: calc(2 * var(--height));
+            display:inline-flex;
+            width:100%;
+            margin: 0;
+            padding: 0;
+          }
+          canvas{
+            height: calc(100% - calc(2 * var(--height)));
+            border: 0px;
+            display:inline-block;
+            width:100%;
+            margin: 0;
+            position: absolute;
+            top:calc(2 * var(--height));
+            left:0px;
+            padding: 0;}
+
+
+
+
+            .container {
+  display: block;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+    top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+
+  display: inline-block;
+  height: calc(1 * var(--height));
+  width: calc(1* var(--height));
+  margin: auto;
+  background-color: #eee;
+}
+
+/* On mouse-over, add a grey background color */
+.container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.container input:checked ~ .checkmark {
+  background-color: #2196F3;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.container .checkmark:after {
+  left: calc(0.25 * var(--height));
+  top: calc(0.125 * var(--height));
+  width: calc(0.25 * var(--height));
+  height: calc(0.5 * var(--height));
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+        </style>
     </head>
 <meta charset="UTF-8">
 <body style="z-index: -2;">
-    <canvas id="myCanvas" style="border: 0px;display:inline-block;height:80%; width:100%;  margin: 0;
-    position: absolute;
-    top:20%;
-    left:0px;
-    padding: 0;"></canvas>
-    <Div style="display:inline-block;width:80%;margin: top 2%;margin-left: 10%;
-  padding: 0;" scrool="true">
-  <font size="5">
-    <p style="display:inline-block" id="text" align="center">
-    100</p></font>
-    <form>
-        <label for="border">Показать границы</label>
-        <input id="border" type="checkbox">
-        <input id="buy" type="button" value="Купить участок">
-        <input id="clear" type="button" value="Расчистить от деревьев">
-        <input id="addway" type="button" value="Построить грунтовую дорогу">
-        <input id="siloss" type="button" value="Построить хранилище(100т)">
-        <input id="addfield" type="button" value="Вспахать участок">
-        <input id="000" type="button" value="Внести удобрения">
-        <input id="kf" type="button" value="Посеять картофель">
-        <input id="getkf" type="button" value="Собрать картофель">
-        <input id="skladtrade19" type="button" value="Продать на базу со склада">
-        <input id="addptstation" type="button" value="Построить АЗС">
+    <canvas id="myCanvas" ></canvas>
+    <Div class="header">
+    <div class="info" id="text"></div>
+    <div class="dropdown">
+
+        <div>Инструменты</div>
+        <div class="dropdown-content" style="cursor:auto;">
+        <label class="container">Показать границы:
+        <input type="checkbox" checked="checked" id="border">
+        <span class="checkmark"></span>
+        </label>
+        </div>
+        <div class="dropdown-content" id="buy" >Купить участок</div>
+        <div class="dropdown-content" id="clear">Расчистить от деревьев</div>
+        <div class="dropdown-content" id="addway">Построить грунтовую дорогу</div>
+        <div class="dropdown-content" id="siloss">Построить хранилище(100т)</div>
+        <div class="dropdown-content" id="addfield" >Вспахать участок</div>
+        <div class="dropdown-content" id="000" >Внести удобрения</div>
+        <div class="dropdown-content" id="kf" >Посеять картофель</div>
+        <div class="dropdown-content" id="getkf" >Собрать картофель</div>
+        <div class="dropdown-content" id="skladtrade19" >Продать на базу со склада</div>
+        <div class="dropdown-content" id="addptstation">Построить АЗС</div>
     </form>
 </div>
 <script src="code.js"></script>
