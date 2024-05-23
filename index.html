@@ -5,7 +5,11 @@
           :root {
             --height: max(2.5vh, 1.5vw);
         }
-        body * {
+        body , body *{
+            -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; 
+            touch-action: none;
           font-family: monospace;
           color: #fff;
             background-color: #193250;
@@ -15,35 +19,42 @@
             margin: 0;
         }
         .dropdown {
+            text-align: center;
             cursor: pointer;
-            min-width: min(50vw,70vh);
+            min-width: min(40vw,70vh);
             position: relative;
             display: inline-block;
         }
         .dropdown>* {
-            line-height: calc(2 * var(--height));
-            text-align: center;
+            padding: calc(0.25* var(--height));
+            justify-content: center;
+            align-items:center;
+            display: flex;
             width: 100%;
+            box-sizing: border-box;
             min-height: calc(2 * var(--height));
-            padding: 0;
-            border-width: 1px;
-            border-color: grey;
+        }
+        .dropdown>*>* {
+            background-color: transparent;
         }
         .dropdown-content:hover {
             background-color: 		#1a546a;
         }
-        .dropdown-content {
+        .dropdown-content{
+            justify-content: center;
+            align-items:center;
+            border-top: 1px #1a546a solid;
             cursor: pointer;
             display: none;
             position: relative;
         }
-        .dropdown:focus .dropdown-content {
-            display: block;
+        .dropdown:focus .dropdown-content   {
+            display:flex;
         }
         .info {
             text-wrap: nowrap;
             margin: 0;
-            width: calc(100% - min(50vw,70vh));
+            width: calc(100% - min(40vw,70vh));
             padding-left: calc(0.5 * var(--height));
             line-height: calc(2 * var(--height));
             height: calc(2 * var(--height));
@@ -56,7 +67,6 @@
             padding: 0;
         }
         canvas {
-            touch-action: none;
             height: calc(100% - calc(2 * var(--height)));
             border: 0px;
             display: inline-block;
