@@ -46,6 +46,7 @@ var cubature = 0;
 var hour=0;
 var buildings=[];
 ctx.lineCap = "round";
+console.log(document.cookie);
 const textures = {
     "ground" : { src: "media/ground.png", pattern: null,img:null},
     "swamp" : { src: "media/swamp.png", pattern: null ,img:null},
@@ -109,9 +110,9 @@ setInterval(function () {
         if (date % 7 == 0) {
             money -= cubature * 0.4 * inflation;
             cubature = 0;
+
         }
     }
-    var disttoway = 1000;
     if (treesForClear.length > 0) {
         for (var j = 0; j < ways.length; j++) {
             for (var i = 1; i < ways[j].length; i++) {
@@ -203,7 +204,6 @@ canvas.onmousemove = function (e) {
     }
     graphics();
 }
-
 canvas.onmouseout = function () {
     selected = -1;
 }
@@ -349,6 +349,8 @@ canvas.onclick = function (e) {
     }
 }
 canvas.onmousedown = function (e) {
+    mx=canvas.relMouseCoords(e).x;
+    my=canvas.relMouseCoords(e).y;
     if (mode == 3) {
         var waytype = 2;
         var isway = false;
@@ -374,6 +376,9 @@ canvas.onmouseup = function () {
         mode = -1;
     }
 }
+canvas.ontouchmove=canvas.onmousemove;
+canvas.ontouchstart=canvas.onmousedown;
+canvas.ontouchend=canvas.onmouseup;
 document.onkeydown = function (evt) {
     evt = evt || window.event;
     var isEscape = false;
@@ -966,10 +971,19 @@ function relMouseCoords(event){
         totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
     }
     while(currentElement = currentElement.offsetParent)
+if(event.touches==undefined){
+    canvasX = event.clientX- totalOffsetX;
+    canvasY = event.clientY - totalOffsetY;}else{
+        canvasX = event.touches[0].clientX - totalOffsetX;
+        canvasY = event.touches[0].clientY - totalOffsetY;
+    }
 
-    canvasX = event.pageX - totalOffsetX;
-    canvasY = event.pageY - totalOffsetY;
 
     return {x:canvasX, y:canvasY}
+}
+function is_touch_enabled() {
+    return ( 'ontouchstart' in window ) || 
+           ( navigator.maxTouchPoints > 0 ) || 
+           ( navigator.msMaxTouchPoints > 0 );
 }
 HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
