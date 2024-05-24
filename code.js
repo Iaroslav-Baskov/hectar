@@ -46,7 +46,6 @@ var cubature = 0;
 var hour=0;
 var buildings=[];
 ctx.lineCap = "round";
-console.log(document.cookie);
 const textures = {
     "ground" : { src: "media/ground.png", pattern: null,img:null},
     "swamp" : { src: "media/swamp.png", pattern: null ,img:null},
@@ -82,13 +81,12 @@ loadTextures(() => {
 generateWorld();
 setInterval(function () {
     hour++;
-    graphics();
     moneyout.innerText = "День " + Math.floor(date) + " Бюджет: " + Math.floor(money) + "k₽"
     if (mode == 4) {
         var waytype = 2;
         var lastwaypoint = ways[ways.length - 1][ways[ways.length - 1].length - 1];
         if (Math.sqrt((mx - lastwaypoint[0]) ** 2 + (my - lastwaypoint[1]) ** 2) > 2 * m) {
-            if(isClear([lastwaypoint[0] + parallelx(mx, my, lastwaypoint[0], lastwaypoint[1], 2 * m), lastwaypoint[1] + parallely(mx, my, lastwaypoint[0], lastwaypoint[1], 2 * m)],2)){
+            if(isClear([lastwaypoint[0] + parallelx(mx, my, lastwaypoint[0], lastwaypoint[1], 2 * m), lastwaypoint[1] + parallely(mx, my, lastwaypoint[0], lastwaypoint[1], 2 * m)],2,checkfield=false)){
                 if(buy(3.4*inflation)){ways[ways.length - 1].push([lastwaypoint[0] + parallelx(mx, my, lastwaypoint[0], lastwaypoint[1], 2 * m), lastwaypoint[1] + parallely(mx, my, lastwaypoint[0], lastwaypoint[1], 2 * m), waytype, true, false]);}
                  else{mode=-1;}
             }
@@ -112,14 +110,10 @@ setInterval(function () {
             cubature = 0;
 
         }
+        graphics();
     }
     if (treesForClear.length > 0) {
-        for (var j = 0; j < ways.length; j++) {
-            for (var i = 1; i < ways[j].length; i++) {
-                disttoway = Math.min(Math.sqrt((treesForClear[0][0] - ways[j][i][0]) ** 2 + (treesForClear[0][1] - ways[j][i][1]) ** 2), disttoway);
-            }
-        }
-        if (disttoway <100) {
+
             var V = (0.75 * treesForClear[0][3]) ** 3 * Math.PI;
             // if (treesForClear[0][2] == 2) {
             //     money += V * 3.3 * inflation;
@@ -130,13 +124,10 @@ setInterval(function () {
             // }
             cubature+=V;
             treesForClear.splice(0, 1);
-        } else {
-            treesForClear.unshift(treesForClear.pop());
-        }
     } else if (mode != 2 & mode != 5) {
         forClear = [];
     }
-}, 10);});
+}, 30);});
 clearButton.onmousedown = function () {
     borders.checked = true;
     mode = 2;
@@ -208,6 +199,7 @@ canvas.onmouseout = function () {
     selected = -1;
 }
 canvas.onclick = function (e) {
+    graphics();
     mx=canvas.relMouseCoords(e).x;
     my=canvas.relMouseCoords(e).y;
     if (mode == 0) {
@@ -224,7 +216,7 @@ canvas.onclick = function (e) {
         }
         mode = -1;
     }
-    if ((mode == 2 || mode == 5)&closeToWay([mx,my],0,50*m)) {
+    if ((mode == 2 || mode == 5)&closeToWay([mx,my],0,50*m) & isClear([mx,my],1*m)) {
         if (terrains[selected][terrains[selected].length - 2]) {
             if (forClear[forClear.length - 1].length > 0) {
                 if ((mx - forClear[forClear.length - 1][0][0]) ** 2 + (my - forClear[forClear.length - 1][0][1]) ** 2 < 100 * m ** 2) {
@@ -257,6 +249,12 @@ canvas.onclick = function (e) {
                     field[field.length-1][0].push(date+calcPolygonArea(field[field.length - 1].concat([field[field.length - 1][0]]))/m**2/240000);
                     field[field.length-1][0].push(0);
                     mode = -1;
+                    for(var i=field.length-2;i>=0;i--){
+                        if(pgIn(field[i],field[field.length - 1])){
+                            field.splice(i,1);
+                        }
+                    }
+                    
                 } else {
                     field[field.length - 1].push([mx, my]);
                 }
@@ -277,7 +275,7 @@ canvas.onclick = function (e) {
         }
     }
     if(mode==7){
-        if(isClear([mx,my],4*m) & closeToWay([mx,my],0*m,100*m)){
+        if(isClear(pointToWay([mx,my],5*m),4*m) & closeToWay([mx,my],0*m,50*m)){
             if(buy(200*inflation)){
             buildings.push([pointToWay([mx,my],5*m)[0],pointToWay([mx,my],5*m)[1],3.5*m,"potato","kfSklad",[100,0,date+20],rotWay([mx,my])]);
             mode=-1;
@@ -334,7 +332,7 @@ canvas.onclick = function (e) {
         }
     }
     if(mode==11){
-        if(isClear([mx,my],25*m) & closeToWay([mx,my],0*m,100*m)){
+        if(isClear(pointToWay([mx,my],25*m),25*m) & closeToWay([mx,my],0*m,50*m)){
             if(buy(3000*inflation)){
             buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"pStation","ptstation",[0,0,date+100],rotWay([mx,my])+Math.PI/2]);
             mode=-1;
@@ -370,11 +368,13 @@ canvas.onmousedown = function (e) {
             mode = 4;
         }
     }
+    graphics();
 }
 canvas.onmouseup = function () {
     if (mode == 4) {
         mode = -1;
     }
+    graphics();
 }
 canvas.ontouchmove=canvas.onmousemove;
 canvas.ontouchstart=canvas.onmousedown;
@@ -400,7 +400,6 @@ document.onkeydown = function (evt) {
 function graphics() {
     ctx.fillStyle = textures["ground"].pattern;
     ctx.fillRect(0, 0, width, height);
-
     drawSwamps();
     drawFields();
     drawRiver();
@@ -413,7 +412,12 @@ function graphics() {
         drawBuildingLabels();
     }
     if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4){
-    drawtoWay(50*m);}
+    drawtoWay(50*m);
+    if(mode!=4 & mode!=3){
+    greenFields(0,"rgba(255,0,0,0.6)");
+    greenFields(1,"rgba(255,0,0,0.6)");
+    greenFields(2,"rgba(255,0,0,0.6)");}
+    redBuildings();}
     if(mode==6){
         greenFields(0);}
     if(mode==9){
@@ -426,16 +430,15 @@ function graphics() {
 function drawSwamps() {
     ctx.fillStyle = textures["swamp"].pattern;
     ctx.globalAlpha = 0.1;
+    ctx.beginPath();
     swamp.forEach(([x, y]) => {
-        ctx.beginPath();
         ctx.arc(x, y, 15 * m, 0, 2 * Math.PI);
-        ctx.fill();
     });
+    ctx.fill();
     ctx.globalAlpha = 1;
 }
 
 function drawFields() {
-    ctx.filter = "blur(" + (m / 2) + "px";
     field.forEach((f, i) => {
         if (f.length > 0) {
             ctx.beginPath();
@@ -447,37 +450,43 @@ function drawFields() {
             } else {
                 ctx.closePath();
             }
-            drawFieldBorder();
             ctx.fillStyle = textures["field"].pattern;
             ctx.fill();
+            ctx.lineWidth=2*m;
+            ctx.strokeStyle = "rgba(175,147,142,0.4)";
+            ctx.stroke();
             if (f[0][3] === 1) {
+                ctx.lineWidth=1*m;
                 ctx.fillStyle = "rgba(0,0,0,0.3)";
+                ctx.strokeStyle = "rgba(0,0,0,0.3)";
+                ctx.stroke();
                 ctx.fill();
             } else if (f[0][3] === 2) {
+                ctx.lineWidth=1*m;
                 ctx.fillStyle = "rgba(10," + (f[0][2] - date) + ",20,0.4)";
+                ctx.strokeStyle = "rgba(10," + (f[0][2] - date) + ",20,0.4)";
+                ctx.stroke();
                 ctx.fill();
+            }
+            if (borders.checked) {
+                ctx.setLineDash([2, 7]);
+                ctx.strokeStyle = "#705000";
+                ctx.stroke();
+                ctx.setLineDash([]);
             }
         }
     });
     ctx.filter = "none";
 }
 
-function drawFieldBorder() {
-    if (borders.checked) {
-        ctx.setLineDash([2, 7]);
-        ctx.strokeStyle = "#705000";
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-}
-function greenFields(md) {
+function greenFields(md, green="rgba(0,255,0,0.3)") {
     field.forEach((f, i) => {
         if (f.length > 0) {
             if(f[0][2]<date & f[0][3]==md){
             ctx.beginPath();
             ctx.lineWidth = 3;
             drawway(f, 0);
-            ctx.fillStyle ="rgba(0,255,0,0.3)";
+            ctx.fillStyle =green;
             ctx.fill();}
         }
     });
@@ -599,19 +608,37 @@ function drawBuildings() {
         ctx.restore();
     });
 }
+function redBuildings(red="rgba(255,0,0,0.6)") {
+    buildings.forEach(building => {
+        ctx.save();
+        ctx.translate(building[0], building[1]);
+        ctx.rotate(building[6]);
+        ctx.translate(-building[2], -building[2]);
+        ctx.beginPath();
+        ctx.rect(0, 0, building[2] * 2, building[2] * 2);
+        ctx.fillStyle=red;
+        ctx.fill();
+        ctx.restore();
+    });
+}
 
 function drawTrees() {
     const alltrees = trees.concat(treesForClear);
+    let treetype=-1;
+    ctx.beginPath();
     alltrees.forEach(tree => {
-        ctx.beginPath();
-        ctx.rect(tree[0] - 3 * tree[3] * m, tree[1] - 3 * tree[3] * m, 6 * tree[3] * m, 6 * tree[3] * m);
+        if(tree[2] != treetype){
         if (tree[2] === 1) {
             ctx.fillStyle = textures["tree1"].pattern;
         } else {
             ctx.fillStyle = textures["tree2"].pattern;
         }
         ctx.fill();
+        ctx.beginPath();
+    }
+        ctx.rect(tree[0] - 3 * tree[3] * m, tree[1] - 3 * tree[3] * m, 6 * tree[3] * m, 6 * tree[3] * m);
     });
+    ctx.fill();
 }
 
 function drawBorders() {
@@ -874,6 +901,7 @@ function pointToWay(point,dist){
     var minim=10000000;
     var minin=-1;
     var minin1=-1;
+    let diam=0;
     dist=Math.abs(dist);
     for(var i=0;i<ways.length;i++){
         for(var j=0;j<ways[i].length;j++){
@@ -884,12 +912,15 @@ function pointToWay(point,dist){
             }
         }
     }
+    if(ways[minin][minin1][2]==1){
+        diam=6*m;
+    }else{diam=2*m;}
     if(minin1>0){
-        p1=[ways[minin][minin1][0]+pdx(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+2*m)];
-        p2=[ways[minin][minin1][0]+pdx(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-2*m)];
+        p1=[ways[minin][minin1][0]+pdx(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+diam)];
+        p2=[ways[minin][minin1][0]+pdx(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1-1][0],ways[minin][minin1-1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-diam)];
     }else{
-        p1=[ways[minin][minin1][0]+pdx(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+2*m)];
-        p2=[ways[minin][minin1][0]+pdx(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-2*m)];
+        p1=[ways[minin][minin1][0]+pdx(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],dist+diam)];
+        p2=[ways[minin][minin1][0]+pdx(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-2*m),ways[minin][minin1][1]+pdy(ways[minin][minin1+1][0],ways[minin][minin1+1][1],ways[minin][minin1][0],ways[minin][minin1][1],-dist-diam)];
     }
     if((p2[0]-point[0])**2+(p2[1]-point[1])**2>(p1[0]-point[0])**2+(p1[1]-point[1])**2){
         return p1;
@@ -932,13 +963,22 @@ function calcPolygonArea(vertices) {
 
     return Math.abs(total);
 }
-function isClear(point,radius){
+function isClear(point,radius,checkfield=true){
     let clear=false;
     for(var i=0;i<terrains.length;i++){
         if(terrains[i][terrains[i].length-2] & point_in_polygon(point,terrains[i])){
             clear=true;
         }
     }
+    if(checkfield){
+    for(var i=0;i<field.length;i++){
+        if(!(mode==5 & i==field.length-1)){
+        if(field[i].length>2){
+        if(point_in_polygon(point,field[i])){
+            clear=false;
+        }}
+    }
+    }}
     for(var i=0;i<swamp.length;i++){
         if((point[0]-swamp[i][0])**2+(point[1]-swamp[i][1])**2<radius**2){
         clear=false;
@@ -985,5 +1025,14 @@ function is_touch_enabled() {
     return ( 'ontouchstart' in window ) || 
            ( navigator.maxTouchPoints > 0 ) || 
            ( navigator.msMaxTouchPoints > 0 );
+}
+function pgIn(small,big){
+    var cont=true;
+    for(var i=0;i<small.length;i++){
+        if(!point_in_polygon([small[i][0],small[i][1]],big)){
+            cont=false;
+        }
+    }
+    return cont;
 }
 HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
