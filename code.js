@@ -1,3 +1,4 @@
+
 var canvas = document.getElementById("myCanvas");
 var width = canvas.clientWidth;
 var height = canvas.clientHeight;
@@ -314,13 +315,13 @@ canvas.onclick = function (e) {
                 i=field.length-1;
                 mode=-1;
                 for (var i = 0; i < buildings.length; i++) {
-                    if(buildings[i][4]=="kfSklad" & buildings[i][5][2]<=date){
+                    if(buildings[i][4]=="kfSklad" & buildings[i][7]<=date){
                         var V=Math.min(buildings[i][5][0]-buildings[i][5][1],vegetables[0]);
                         vegetables[0]-=V;
                         buildings[i][5][1]+=V;
                     }
                 }
-                if(vegetables[0]>1){
+                if(vegetables[0]>=1){
                     alert("Пропало "+Math.floor(vegetables[0])+" тонн урожаая. Стройте больше складов, чтобы избежать потерь в дальнейшем.");
                 }
                 vegetables[0]=0;
@@ -419,9 +420,9 @@ function graphics() {
     if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4){
     drawtoWay(50*m);
     if(mode!=4 & mode!=3){
-    greenFields(0,"rgba(255,0,0,0.6)");
-    greenFields(1,"rgba(255,0,0,0.6)");
-    greenFields(2,"rgba(255,0,0,0.6)");}
+    greenFields(0,green="rgba(255,0,0,0.6)");
+    greenFields(1,green="rgba(255,0,0,0.6)");
+    greenFields(2,green="rgba(255,0,0,0.6)");}
     redBuildings();}
     if(mode==6){
         greenFields(0);}
