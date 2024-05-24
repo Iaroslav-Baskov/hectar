@@ -1,12 +1,11 @@
-
 var canvas = document.getElementById("myCanvas");
 var width = canvas.clientWidth;
 var height = canvas.clientHeight;
 canvas.width=width;
 canvas.height=height;
 const ctx = canvas.getContext("2d");
-var xterrain = Math.min(Math.max(Math.floor(width/200),3),10);
-var yterrain = Math.min(Math.max(Math.floor(height/200),3),5);
+var xterrain = Math.min(Math.max(Math.floor(width/300),3),10);
+var yterrain = Math.min(Math.max(Math.floor(height/300),3),5);
 var S = xterrain * yterrain;
 var m = Math.sqrt(width * height / S / 10000);
 var money = 1500;
@@ -34,7 +33,6 @@ var inflation = 1;
 var selected = -1;
 var date = 1;
 var mx;
-var cars = [];
 var  field=[];
 var vegetables=[0,0,0];
 var forClear = [];
@@ -46,6 +44,9 @@ var cubature = 0;
 var hour=0;
 var buildings=[];
 ctx.lineCap = "round";
+ctx.font=(0.05*width)+"px Courier new";
+ctx.fillStyle="white";
+ctx.fillText("Loading textures...",0.2*width,(0.05*width));
 const textures = {
     "ground" : { src: "media/ground.png", pattern: null,img:null},
     "swamp" : { src: "media/swamp.png", pattern: null ,img:null},
@@ -79,10 +80,13 @@ loadTextures(() => {
     console.log("Все текстуры загружены");
 
 generateWorld();
+
+ctx.font=(10*m)+"px Courier new";
 setInterval(function () {
     hour++;
     moneyout.innerText = "День " + Math.floor(date) + " Бюджет: " + Math.floor(money) + "k₽"
     if (mode == 4) {
+        graphics();
         var waytype = 2;
         var lastwaypoint = ways[ways.length - 1][ways[ways.length - 1].length - 1];
         if (Math.sqrt((mx - lastwaypoint[0]) ** 2 + (my - lastwaypoint[1]) ** 2) > 2 * m) {
@@ -127,7 +131,8 @@ setInterval(function () {
     } else if (mode != 2 & mode != 5) {
         forClear = [];
     }
-}, 30);});
+}, 30);
+
 clearButton.onmousedown = function () {
     borders.checked = true;
     mode = 2;
@@ -277,10 +282,10 @@ canvas.onclick = function (e) {
     if(mode==7){
         if(isClear(pointToWay([mx,my],5*m),4*m) & closeToWay([mx,my],0*m,50*m)){
             if(buy(200*inflation)){
-            buildings.push([pointToWay([mx,my],5*m)[0],pointToWay([mx,my],5*m)[1],3.5*m,"potato","kfSklad",[100,0,date+20],rotWay([mx,my])]);
+            buildings.push([pointToWay([mx,my],5*m)[0],pointToWay([mx,my],5*m)[1],3.5*m,"potato","kfSklad",[100,0],rotWay([mx,my]),date+20,20]);
             mode=-1;
-            for(var i=0;i<trees.length;i++){
-                if((trees[i][0]-mx)**2+(trees[i][1]-my)**2<25*m**2){
+            for(var i=trees.length-1;i>=0;i--){
+                if((trees[i][0]-pointToWay([mx,my],5*m)[0])**2+(trees[i][1]-pointToWay([mx,my],5*m)[1])**2<16*m**2){
                     treesForClear.push(trees[i]);
                     trees.splice(i, 1);
                 }
@@ -334,10 +339,10 @@ canvas.onclick = function (e) {
     if(mode==11){
         if(isClear(pointToWay([mx,my],25*m),25*m) & closeToWay([mx,my],0*m,50*m)){
             if(buy(3000*inflation)){
-            buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"pStation","ptstation",[0,0,date+100],rotWay([mx,my])+Math.PI/2]);
+            buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"pStation","ptstation",[0,0],rotWay([mx,my])+Math.PI/2,date+100,100]);
             mode=-1;
-            for(var i=0;i<trees.length;i++){
-                if((trees[i][0]-mx)**2+(trees[i][1]-my)**2<625*m**2){
+            for(var i=trees.length-1;i>=0;i--){
+                if((trees[i][0]-pointToWay([mx,my],25*m)[0])**2+(trees[i][1]-pointToWay([mx,my],25*m)[1])**2<625*m**2){
                     treesForClear.push(trees[i]);
                     trees.splice(i, 1);
                 }
@@ -397,6 +402,7 @@ document.onkeydown = function (evt) {
         mode = -1;
     }
 }
+});
 function graphics() {
     ctx.fillStyle = textures["ground"].pattern;
     ctx.fillRect(0, 0, width, height);
@@ -409,7 +415,6 @@ function graphics() {
     if (borders.checked) {
         drawBorders();
         drawForClear();
-        drawBuildingLabels();
     }
     if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4){
     drawtoWay(50*m);
@@ -430,12 +435,13 @@ function graphics() {
 function drawSwamps() {
     ctx.fillStyle = textures["swamp"].pattern;
     ctx.globalAlpha = 0.1;
-    ctx.beginPath();
     swamp.forEach(([x, y]) => {
-        ctx.arc(x, y, 15 * m, 0, 2 * Math.PI);
+        ctx.beginPath();
+        ctx.rect(x-7.5 * m, y-7.5 * m, 15 * m,15 * m);
+        ctx.fill();
     });
-    ctx.fill();
     ctx.globalAlpha = 1;
+
 }
 
 function drawFields() {
@@ -594,7 +600,7 @@ function drawBuildings() {
         ctx.translate(building[0], building[1]);
         ctx.rotate(building[6]);
         ctx.translate(-building[2], -building[2]);
-        if (building[5][2] <= date) {
+        if (building[7] <= date) {
             ctx.drawImage(textures[building[3]].img, 0, 0, building[2] * 2, building[2] * 2);
         } else if (borders.checked) {
             ctx.beginPath();
@@ -605,21 +611,38 @@ function drawBuildings() {
             ctx.stroke();
             ctx.setLineDash([]);
         }
+        ctx.rotate(-building[6]);
+        if(borders.checked){
+            if (building[4] === "kfSklad" && building[7] <= date) {
+                ctx.fillStyle = "rgba(0,0,0,1)";
+                ctx.fillText(Math.floor(building[5][1] / building[5][0] * 100) + "%", -building[2] , building[2] );
+            }
+            if(building[7]>date){
+                ctx.fillStyle = "rgba(0,0,0,1)";
+                ctx.fillText(Math.floor((building[8]-building[7]+date) / building[8] * 100) + "%", -building[2] ,building[2] );
+            }
+        }
         ctx.restore();
     });
 }
 function redBuildings(red="rgba(255,0,0,0.6)") {
     buildings.forEach(building => {
         ctx.save();
+        ctx.beginPath();
         ctx.translate(building[0], building[1]);
         ctx.rotate(building[6]);
         ctx.translate(-building[2], -building[2]);
-        ctx.beginPath();
         ctx.rect(0, 0, building[2] * 2, building[2] * 2);
         ctx.fillStyle=red;
         ctx.fill();
         ctx.restore();
     });
+    ctx.beginPath();
+    swamp.forEach(swam => {
+        ctx.rect(swam[0]-7.5*m, swam[1]-7.5*m, 15*m, 15*m);
+        ctx.fillStyle=red;
+    });
+    ctx.fill();
 }
 
 function drawTrees() {
@@ -659,10 +682,11 @@ function drawBorders() {
         }
         ctx.stroke();
         if(i==selected & mode==0){
-            ctx.font = "15px Arial";
             ctx.fillStyle = "rgba(0,0,0,1)";
-            const message = !start ? "цена: " + Math.floor(terrains[selected][terrains[selected].length - 1] * inflation) + "k₽" : "Выберите бесплатный участок для освоения";
+            var message = !start ? "цена: " + Math.floor(terrains[selected][terrains[selected].length - 1] * inflation) + "k₽" : "Выберите бесплатный";
             ctx.fillText(message, mx, my);
+            message = !start ? "" : "участок для освоения";
+            ctx.fillText(message, mx, my+10*m);
         }
     });
     ctx.setLineDash([]);
@@ -686,16 +710,6 @@ function drawForClear() {
         }
     });
     ctx.setLineDash([]);
-}
-
-function drawBuildingLabels() {
-    buildings.forEach(building => {
-        if (building[4] === "kfSklad" && building[5][2] <= date) {
-            ctx.font = "15px Arial";
-            ctx.fillStyle = "rgba(0,0,0,1)";
-            ctx.fillText(Math.floor(building[5][1] / building[5][0] * 100) + "%", building[0] - building[2], building[1] - building[2]);
-        }
-    });
 }
                
 
@@ -980,7 +994,7 @@ function isClear(point,radius,checkfield=true){
     }
     }}
     for(var i=0;i<swamp.length;i++){
-        if((point[0]-swamp[i][0])**2+(point[1]-swamp[i][1])**2<radius**2){
+        if((point[0]-swamp[i][0])**2+(point[1]-swamp[i][1])**2<(radius+7.5*m)**2){
         clear=false;
         }
     }
@@ -1034,5 +1048,17 @@ function pgIn(small,big){
         }
     }
     return cont;
+}
+function clearrubbish(){
+    if(field.length>0){
+        if(field[field.length-1].length<3){
+            field.splice(field.length-1,1);
+        }
+    }
+    if(ways.length>0){
+        if(ways[ways.length-1].length<3){
+            ways.splice(ways.length-1,1);
+        }
+    }
 }
 HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
