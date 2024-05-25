@@ -1,4 +1,3 @@
-
 var canvas = document.getElementById("myCanvas");
 var width = canvas.clientWidth;
 var height = canvas.clientHeight;
@@ -48,6 +47,10 @@ ctx.lineCap = "round";
 ctx.font=(0.05*width)+"px Courier new";
 ctx.fillStyle="white";
 ctx.fillText("Loading textures...",0.2*width,(0.05*width));
+ctx.miterLimit=1;
+var ofx=0;
+var ofy=0;
+var res=1;
 const textures = {
     "ground" : { src: "media/ground.png", pattern: null,img:null},
     "swamp" : { src: "media/swamp.png", pattern: null ,img:null},
@@ -113,7 +116,11 @@ setInterval(function () {
         if (date % 7 == 0) {
             money -= cubature * 0.4 * inflation;
             cubature = 0;
-
+            buildings.forEach(building => {
+                if(building[3]=="pStation" & building[7]<date){
+                    money+=building[5][0]*inflation*(Math.random()+0.5);
+                };
+            });
         }
         graphics();
     }
@@ -135,6 +142,7 @@ setInterval(function () {
 }, 30);
 
 clearButton.onmousedown = function () {
+    clearrubbish()
     borders.checked = true;
     mode = 2;
     forClear.push([]);
@@ -143,6 +151,7 @@ document.getElementById("checker").onmousedown = function () {
     borders.checked = !borders.checked;
 }
 fieldButton.onmousedown = function () {
+    clearrubbish()
     borders.checked = true;
     mode = 5;
     if(field.length==0){
@@ -151,23 +160,29 @@ fieldButton.onmousedown = function () {
     forClear.push([]);
 }
 bwButton.onmousedown = function () {
+    clearrubbish()
     borders.checked = true;
     mode = 3;
     ways.push([]);
 }
 field1Button.onmousedown=function() {
+    clearrubbish()
     mode=6;
 }
 kfButton.onmousedown=function(){
+    clearrubbish()
     mode=8;
 }
 tradeButton.onmousedown=function(){
+    clearrubbish()
     mode=10;
 }
 getkfButton.onmousedown=function(){
+    clearrubbish()
     mode=9;
 }
 silosButton.onmousedown=function() {
+    clearrubbish()
     borders.checked = true;
     mode=7;
 }
@@ -178,13 +193,16 @@ document.getElementById("cancel").onmousedown=function(){
     if (mode == 5) {
         field.splice(forClear.length - 1, 1);
     }
+    clearrubbish()
     mode = -1;
 }
 ptButton.onmousedown=function() {
+    clearrubbish()
     borders.checked = true;
     mode=11;
 }
 bButton.onmousedown = function () {
+    clearrubbish()
     borders.checked = true;
     mode = 0;
 }
@@ -208,7 +226,7 @@ canvas.onclick = function (e) {
     graphics();
     mx=canvas.relMouseCoords(e).x;
     my=canvas.relMouseCoords(e).y;
-    if (mode == 0) {
+    if (mode == 0 & !terrains[selected][terrains[selected].length - 2]) {
         if (confirm("Вы точно хотите приобрести этот участок?")) {
             if (money >= terrains[selected][terrains[selected].length - 1] || start) {
                 terrains[selected][terrains[selected].length - 2] = true;
@@ -259,7 +277,13 @@ canvas.onclick = function (e) {
                         if(pgIn(field[i],field[field.length - 1])){
                             field.splice(i,1);
                         }
+                        else if(isIntersect(field[i],field[field.length - 1])){
+                            field.splice(field.length - 1,1);
+                            i=0;
+                            alert("Поле пересекает другое поле!");
+                        }
                     }
+                    clearrubbish()
                     
                 } else {
                     field[field.length - 1].push([mx, my]);
@@ -281,7 +305,7 @@ canvas.onclick = function (e) {
         }
     }
     if(mode==7){
-        if(isClear(pointToWay([mx,my],5*m),4*m) & closeToWay([mx,my],0*m,50*m)){
+        if(isClear(pointToWay([mx,my],5*m),4*m,checkfield=false) & closeToWay([mx,my],0*m,50*m)){
             if(buy(200*inflation)){
             buildings.push([pointToWay([mx,my],5*m)[0],pointToWay([mx,my],5*m)[1],3.5*m,"potato","kfSklad",[100,0],rotWay([mx,my]),date+20,20]);
             mode=-1;
@@ -340,7 +364,7 @@ canvas.onclick = function (e) {
     if(mode==11){
         if(isClear(pointToWay([mx,my],25*m),25*m) & closeToWay([mx,my],0*m,50*m)){
             if(buy(3000*inflation)){
-            buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"pStation","ptstation",[0,0],rotWay([mx,my])+Math.PI/2,date+100,100]);
+            buildings.push([pointToWay([mx,my],25*m)[0],pointToWay([mx,my],25*m)[1],20*m,"pStation","ptstation",[70],rotWay([mx,my])+Math.PI/2,date+100,100]);
             mode=-1;
             for(var i=trees.length-1;i>=0;i--){
                 if((trees[i][0]-pointToWay([mx,my],25*m)[0])**2+(trees[i][1]-pointToWay([mx,my],25*m)[1])**2<625*m**2){
@@ -400,6 +424,7 @@ document.onkeydown = function (evt) {
         if (mode == 5) {
             field.splice(forClear.length - 1, 1);
         }
+        clearrubbish()
         mode = -1;
     }
 }
@@ -417,19 +442,31 @@ function graphics() {
         drawBorders();
         drawForClear();
     }
-    if(mode==11 || mode==7 || mode==2 || mode==5 || mode==3 ||mode==4){
+    if(mode==11|| mode==2){
     drawtoWay(50*m);
-    if(mode!=4 & mode!=3){
-    greenFields(0,green="rgba(255,0,0,0.6)");
-    greenFields(1,green="rgba(255,0,0,0.6)");
-    greenFields(2,green="rgba(255,0,0,0.6)");}
+    greenFields("",green="rgba(255,0,0,0.6)");
+    redBuildings();}
+    if(mode==5){
+        drawtoWay(50*m);
+        greenFields("",green="rgba(255,0,0,0.6)");
+        redBuildings();
+    }
+    if(mode==7){
+    drawtoWay(10*m);
+    redBuildings();
+    }
+    if(mode==3 ||mode==4){
+    drawtoWay(50*m,green="rgba(255,255,0,0.1)");
+    drawtoWay(5*m);
     redBuildings();}
     if(mode==6){
-        greenFields(0);}
+        greenFields(md=0,green="rgba(0,255,0,0.3)");}
     if(mode==9){
-        greenFields(2);}
+        greenFields(md=2,green="rgba(0,255,0,0.3)",dat=true);}
     if(mode==8){
-        greenFields(1);}
+        greenFields(md=1,green="rgba(0,255,0,0.3)");}
+    if(mode==10){
+        redBuildings(red="rgba(0,255,0,0.3)",type="kfSklad");}
     
 }
 
@@ -483,13 +520,12 @@ function drawFields() {
             }
         }
     });
-    ctx.filter = "none";
 }
 
-function greenFields(md, green="rgba(0,255,0,0.3)") {
-    field.forEach((f, i) => {
+function greenFields(md="", green="rgba(0,255,0,0.3)",dat=false) {
+    field.forEach((f) => {
         if (f.length > 0) {
-            if(f[0][2]<date & f[0][3]==md){
+            if(((f[0][2]<date & f[0][2]!=undefined) || !dat) & (f[0][3]==md || md==="")){
             ctx.beginPath();
             ctx.lineWidth = 3;
             drawway(f, 0);
@@ -543,10 +579,10 @@ function drawWays() {
         }
     });
 }
-function drawtoWay(r) {
+function drawtoWay(r, green="rgba(0,255,0,0.3)") {
     ctx.beginPath();
     ctx.lineWidth=r*2;
-    ctx.strokeStyle="rgba(0,255,0,0.3)";
+    ctx.strokeStyle=green;
 
     ways.forEach(way => {
         if (way.length > 1) {
@@ -626,8 +662,10 @@ function drawBuildings() {
         ctx.restore();
     });
 }
-function redBuildings(red="rgba(255,0,0,0.6)") {
+function redBuildings(red="rgba(255,0,0,0.6)",type="") {
+    
     buildings.forEach(building => {
+        if(type=="" || building[4]==type){
         ctx.save();
         ctx.beginPath();
         ctx.translate(building[0], building[1]);
@@ -636,14 +674,15 @@ function redBuildings(red="rgba(255,0,0,0.6)") {
         ctx.rect(0, 0, building[2] * 2, building[2] * 2);
         ctx.fillStyle=red;
         ctx.fill();
-        ctx.restore();
+        ctx.restore();}
     });
+    if(type==""){
     ctx.beginPath();
     swamp.forEach(swam => {
         ctx.rect(swam[0]-7.5*m, swam[1]-7.5*m, 15*m, 15*m);
         ctx.fillStyle=red;
     });
-    ctx.fill();
+    ctx.fill();}
 }
 
 function drawTrees() {
@@ -1062,4 +1101,59 @@ function clearrubbish(){
         }
     }
 }
+function isIntersect(small,big){
+    for(var i=0;i<small.length-1;i++){
+        for(var j=0;j<big.length-1;j++){
+            if(hasIntersection(small[i][0],small[i][1],small[i+1][0],small[i+1][1],big[j][0],big[j][1],big[j+1][0],big[j+1][1])){
+                return true;
+            }
+        }
+    }
+    for(var j=0;j<big.length-1;j++){
+            if(hasIntersection(small[0][0],small[0][1],small[small.length-1][0],small[small.length-1][1],big[j][0],big[j][1],big[j+1][0],big[j+1][1])){
+                return true;
+            }
+    }
+    for(var i=0;i<small.length-1;i++){
+            if(hasIntersection(small[i][0],small[i][1],small[i+1][0],small[i+1][1],big[0][0],big[0][1],big[big.length-1][0],big[big.length-1][1])){
+                return true;
+            }
+    }
+    return false;
+}
+function RotationDirection(p1x, p1y, p2x, p2y, p3x, p3y) {
+    if (((p3y - p1y) * (p2x - p1x)) > ((p2y - p1y) * (p3x - p1x)))
+      return 1;
+    else if (((p3y - p1y) * (p2x - p1x)) == ((p2y - p1y) * (p3x - p1x)))
+      return 0;
+    
+    return -1;
+  }
+  
+  function containsSegment(x1, y1, x2, y2, sx, sy) {
+    if (x1 < x2 && x1 < sx && sx < x2) return true;
+    else if (x2 < x1 && x2 < sx && sx < x1) return true;
+    else if (y1 < y2 && y1 < sy && sy < y2) return true;
+    else if (y2 < y1 && y2 < sy && sy < y1) return true;
+    else if (x1 == sx && y1 == sy || x2 == sx && y2 == sy) return true;
+    return false;
+  }
+  
+  function hasIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+    var f1 = RotationDirection(x1, y1, x2, y2, x4, y4);
+    var f2 = RotationDirection(x1, y1, x2, y2, x3, y3);
+    var f3 = RotationDirection(x1, y1, x3, y3, x4, y4);
+    var f4 = RotationDirection(x2, y2, x3, y3, x4, y4);
+    
+    // If the faces rotate opposite directions, they intersect.
+    var intersect = f1 != f2 && f3 != f4;
+    
+    // If the segments are on the same line, we have to check for overlap.
+    if (f1 == 0 && f2 == 0 && f3 == 0 && f4 == 0) {
+      intersect = containsSegment(x1, y1, x2, y2, x3, y3) || containsSegment(x1, y1, x2, y2, x4, y4) ||
+      containsSegment(x3, y3, x4, y4, x1, y1) || containsSegment(x3, y3, x4, y4, x2, y2);
+    }
+    
+    return intersect;
+  }
 HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
