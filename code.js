@@ -222,6 +222,37 @@ canvas.onmousemove = function (e) {
 canvas.onmouseout = function () {
     selected = -1;
 }
+canvas.onwheel=function(e){
+
+    let k=0.9;
+    let delta=k**(e.deltaY/100)
+    ofx+=(mx-mx*delta)*res;
+    ofy+=(my-my*delta)*res;
+    ctx.translate(+(mx-mx*delta),+(my-my*delta));
+    res*=delta;
+    ctx.scale(delta,delta);
+    if(res<1){
+        ctx.scale(1/res,1/res);
+        res=1;
+    }
+    if(ofx>0){
+        ctx.translate(-ofx/res,0);
+        ofx=0;
+    }
+        if(ofy>0){
+        ctx.translate(0,-ofy/res);
+        ofy=0;
+    }
+    if(ofx<width*(1-res)){
+        ctx.translate((width*(1/res-1)-ofx/res),0);
+        ofx=width*(1-res);
+    }
+    if(ofy<height*(1-res)){
+        ctx.translate(0,(height*(1/res-1)-ofy/res));
+        ofy=height*(1-res);
+    }
+    graphics();
+}
 canvas.onclick = function (e) {
     graphics();
     mx=canvas.relMouseCoords(e).x;
@@ -1072,7 +1103,10 @@ if(event.touches==undefined){
         canvasY = event.touches[0].clientY - totalOffsetY;
     }
 
-
+    canvasX-=ofx;
+    canvasY-=ofy;
+    canvasX/=res;
+    canvasY/=res;
     return {x:canvasX, y:canvasY}
 }
 function is_touch_enabled() {
