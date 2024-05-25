@@ -51,6 +51,7 @@ ctx.miterLimit=1;
 var ofx=0;
 var ofy=0;
 var res=1;
+var lastTouchDistance = 0;
 const textures = {
     "ground" : { src: "media/ground.png", pattern: null,img:null},
     "swamp" : { src: "media/swamp.png", pattern: null ,img:null},
@@ -206,31 +207,17 @@ bButton.onmousedown = function () {
     borders.checked = true;
     mode = 0;
 }
-canvas.onmousemove = function (e) {
-    mx=canvas.relMouseCoords(e).x;
-    my=canvas.relMouseCoords(e).y;
-    for (var i = 0; i < terrains.length; i++) {
-        var terrain = terrains[i].slice();
-        terrain.splice(terrain.length - 1, 1);
-        terrain.splice(terrain.length - 1, 1);
-        if (point_in_polygon([mx, my], terrain)) {
-            selected = i;
-        }
-    }
-    graphics();
-}
-canvas.onmouseout = function () {
-    selected = -1;
-}
 canvas.onwheel=function(e){
 
     let k=0.9;
     let delta=k**(e.deltaY/100)
-    ofx+=(mx-mx*delta)*res;
-    ofy+=(my-my*delta)*res;
-    ctx.translate(+(mx-mx*delta),+(my-my*delta));
-    res*=delta;
-    ctx.scale(delta,delta);
+    if(res*delta<5){
+        ofx+=(mx-mx*delta)*res;
+        ofy+=(my-my*delta)*res;
+        ctx.translate(+(mx-mx*delta),+(my-my*delta));
+        res*=delta;
+        ctx.scale(delta,delta);
+    }
     if(res<1){
         ctx.scale(1/res,1/res);
         res=1;
@@ -252,6 +239,77 @@ canvas.onwheel=function(e){
         ofy=height*(1-res);
     }
     graphics();
+}
+canvas.onmousemove = function (e) {
+    mx=canvas.relMouseCoords(e).x;
+    my=canvas.relMouseCoords(e).y;
+    for (var i = 0; i < terrains.length; i++) {
+        var terrain = terrains[i].slice();
+        terrain.splice(terrain.length - 1, 1);
+        terrain.splice(terrain.length - 1, 1);
+        if (point_in_polygon([mx, my], terrain)) {
+            selected = i;
+        }
+    }
+    if(is_touch_enabled() & mode!=3 & mode!=4){
+        if (e.touches.length === 2) {
+            e.preventDefault();
+    
+            let touch1 = e.touches[0];
+            let touch2 = e.touches[1];
+    
+            let currentTouchDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+            );
+    
+            if (lastTouchDistance) {
+                let k = 0.9;
+                let delta = k ** ((currentTouchDistance - lastTouchDistance) / 100);
+                
+                if (res * delta < 5) {
+                    let mx = (touch1.clientX + touch2.clientX) / 2;
+                    let my = (touch1.clientY + touch2.clientY) / 2;
+                    
+                    ofx += (mx - mx * delta) * res;
+                    ofy += (my - my * delta) * res;
+                    ctx.translate(mx - mx * delta, my - my * delta);
+                    res *= delta;
+                    ctx.scale(delta, delta);
+                }
+    
+                if (res < 1) {
+                    ctx.scale(1 / res, 1 / res);
+                    res = 1;
+                }
+    
+                if (ofx > 0) {
+                    ctx.translate(-ofx / res, 0);
+                    ofx = 0;
+                }
+                if (ofy > 0) {
+                    ctx.translate(0, -ofy / res);
+                    ofy = 0;
+                }
+                if (ofx < width * (1 - res)) {
+                    ctx.translate((width * (1 / res - 1) - ofx / res), 0);
+                    ofx = width * (1 - res);
+                }
+                if (ofy < height * (1 - res)) {
+                    ctx.translate(0, (height * (1 / res - 1) - ofy / res));
+                    ofy = height * (1 - res);
+                }
+                
+                graphics();
+            }
+    
+            lastTouchDistance = currentTouchDistance;
+        }
+    }
+    graphics();
+}
+canvas.onmouseout = function () {
+    selected = -1;
 }
 canvas.onclick = function (e) {
     graphics();
@@ -431,9 +489,13 @@ canvas.onmousedown = function (e) {
     }
     graphics();
 }
-canvas.onmouseup = function () {
+canvas.onmouseup = function (e) {
     if (mode == 4) {
         mode = -1;
+    }else if(is_touch_enabled()){
+        if (e.touches.length < 2) {
+            lastTouchDistance = 0;
+        }
     }
     graphics();
 }
